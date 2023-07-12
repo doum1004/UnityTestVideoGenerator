@@ -1,0 +1,29 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:VisualElement name="Title" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); border-top-width: 5px; border-bottom-width: 5px; border-right-width: 5px; border-left-width: 5px; visibility: visible; display: flex;">
+        <ui:VisualElement style="flex-grow: 0; background-color: rgba(0, 0, 0, 0);">
+            <ui:VisualElement style="flex-grow: 0; background-color: rgba(255, 255, 255, 0.74); visibility: visible; -unity-text-align: lower-left; align-self: center;">
+                <ui:Label tabindex="-1" text="우리가 알아야할" display-tooltip-when-elided="true" name="Label" style="font-size: 30px; color: rgb(195, 115, 64); -unity-font-style: bold; -unity-text-align: upper-center;" />
+            </ui:VisualElement>
+            <ui:VisualElement style="flex-grow: 0; background-color: rgba(45, 134, 195, 0.74); visibility: visible; -unity-text-align: lower-left; align-self: center;">
+                <ui:Label tabindex="-1" text="한국음악" display-tooltip-when-elided="true" style="font-size: 40px; color: rgb(255, 255, 255); -unity-font-style: bold; -unity-text-align: upper-center;" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:VisualElement name="Subtitles" style="flex-grow: 0; background-color: rgba(0, 0, 0, 0); border-top-width: 5px; border-bottom-width: 5px; border-right-width: 5px; border-left-width: 5px; flex-shrink: 0;">
+        <ui:VisualElement style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); justify-content: flex-end; align-items: center; border-bottom-width: 15px;">
+            <ui:VisualElement style="flex-grow: 0; background-color: rgba(255, 255, 255, 0.45); border-right-width: 5px; border-left-width: 5px; border-top-width: 5px; border-bottom-width: 5px;">
+                <ui:Label tabindex="-1" text="1. 부산" display-tooltip-when-elided="true" style="-unity-font-style: bold; font-size: 25px;" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:VisualElement name="Ending" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); border-top-width: 5px; border-bottom-width: 5px; border-right-width: 5px; border-left-width: 5px; visibility: visible; display: none;">
+        <ui:VisualElement style="flex-grow: 1; background-color: rgba(0, 0, 0, 0);">
+            <ui:VisualElement style="flex-grow: 0; background-color: rgba(255, 255, 255, 0.74); visibility: visible; -unity-text-align: lower-left; align-self: center;">
+                <ui:Label tabindex="-1" text="우리가 알아야할" display-tooltip-when-elided="true" name="Label" style="font-size: 30px; color: rgb(195, 115, 64); -unity-font-style: bold; -unity-text-align: upper-center;" />
+            </ui:VisualElement>
+            <ui:VisualElement style="flex-grow: 0; background-color: rgba(45, 134, 195, 0.74); visibility: visible; -unity-text-align: lower-left; align-self: center;">
+                <ui:Label tabindex="-1" text="한국음악" display-tooltip-when-elided="true" style="font-size: 40px; color: rgb(255, 255, 255); -unity-font-style: bold; -unity-text-align: upper-center;" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
