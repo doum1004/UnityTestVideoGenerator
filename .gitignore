@@ -42,5 +42,6 @@ sysinfo.txt
 __*/
 */ProjectSettings/*
 
+# Avoid large files
 *.unity
 *.unity.meta
