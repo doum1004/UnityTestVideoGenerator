@@ -1,0 +1,102 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3759266245739469055
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8507128740199992617}
+  - component: {fileID: 8880616612202653911}
+  - component: {fileID: 8860400797305350244}
+  - component: {fileID: 8776101260257171705}
+  m_Layer: 0
+  m_Name: UI
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8507128740199992617
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3759266245739469055}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8880616612202653911
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3759266245739469055}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_PanelSettings: {fileID: 11400000, guid: 6a918d030c13bed479739eea09030812, type: 2}
+  m_ParentUI: {fileID: 0}
+  sourceAsset: {fileID: 9197481963319205126, guid: f71d6a48c7afb0a49a3c4dbca5d2675e, type: 3}
+  m_SortingOrder: 0
+--- !u!114 &8860400797305350244
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3759266245739469055}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dad3edf2de791be44b7cc725b0ff64b3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_content: "\uC77C\uBCF8\uC74C\uC545 ### \uC77C\uBCF8\uC74C\uC545\uC5D0 \uB300\uD574\uC11C
+    \uC54C\uC544\uBCF4\uC790 ### \uC774\uAC83\uC740 \uC77C\uBCF8\uC74C\uC545\uC5D0
+    \uB300\uD55C \uB0B4\uC6A9\uC785\uB2C8\uB2E4. ### 1. \uC77C\uBCF8\uC804\uD1B5\uC74C\uC545
+    $$ \uC774\uAC83\uC740 \uC77C\uBCF8\uC804\uD1B5\uC74C\uC545\uC785\uB2C8\uB2E4.
+    ### 2. \uC81C\uC774\uB77D $$ \uC774\uAC83\uC740 \uC81C\uC774\uB77D\uC785\uB2C8\uB2E4.
+    ### 3. \uC81C\uC774\uD31D $$ \uC774\uAC83\uC740 \uC81C\uC774\uD31D\uC785\uB2C8\uB2E4.    
+    ### \uC774\uAC83\uC740 \uB9C8\uC9C0\uB9C9 \uBA54\uC138\uC9C0 \uC785\uB2C8\uB2E4."
+  m_ShowScene1: 0
+  m_ShowScene2: 0
+  m_ShowHeader1: 0
+  m_ShowHeader2: 0
+  m_ShowHeader3: 0
+  m_TitleHeader: "\uC6B0\uB9AC\uAC00 \uC54C\uC544\uC57C\uD560"
+  m_Topic: "\uC77C\uBCF8\uC74C\uC545"
+  m_Header1: "1. \uC77C\uBCF8\uC804\uD1B5\uC74C\uC545"
+  m_Header2: "2. \uC81C\uC774\uB77D"
+  m_Header3: "3. \uC81C\uC774\uD31D"
+--- !u!95 &8776101260257171705
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3759266245739469055}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 0}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0

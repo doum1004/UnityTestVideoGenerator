@@ -1,0 +1,22 @@
+fileFormatVersion: 2
+guid: 6f9575bd02dbcfc42898193dfc536f79
+TrueTypeFontImporter:
+  externalObjects: {}
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontNames:
+  - Yeongdeok Haeparang
+  fallbackFontReferences:
+  - {fileID: 12800000, guid: a7ec7e70639e0f745a1e59a87d8cb2a7, type: 3}
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  useLegacyBoundsCalculation: 0
+  shouldRoundAdvanceValue: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
