@@ -34,11 +34,18 @@ public class DataContainer : MonoBehaviour
 
     public List<string> CreateAllImages(string dir)
     {
+        // Delete Child GameObjects
+        for (int i = transform.childCount - 1; i >= 0; --i)
+        {
+            DestroyImmediate(transform.GetChild(i).gameObject);
+        }
+
         List<string> allImages = new List<string>();
 
         // Add images from intro
         if (Data.intro != null && Data.intro.images != null)
         {
+            Data.intro.imgObjs.Clear();
             Data.intro.imgObjs.AddRange(CreateImageObjects(dir, Data.intro.images, "intro"));
         }
 
@@ -48,6 +55,7 @@ public class DataContainer : MonoBehaviour
             int i = 0;
             foreach (var mainData in Data.main)
             {
+                mainData.detail.imgObjs.Clear();
                 mainData.detail.imgObjs.AddRange(CreateImageObjects(dir, mainData.detail.images, "main" + (++i)));
             }
         }
@@ -55,6 +63,7 @@ public class DataContainer : MonoBehaviour
         // Add images from end
         if (Data.conclusion != null && Data.conclusion.images != null)
         {
+            Data.conclusion.imgObjs.Clear();
             Data.conclusion.imgObjs.AddRange(CreateImageObjects(dir, Data.conclusion.images, "conclusion"));
         }
 

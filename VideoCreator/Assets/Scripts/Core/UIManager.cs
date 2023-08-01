@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
+using static TextToSpeech;
 
 [ExecuteAlways]
 [RequireComponent(typeof(UIDocument))]
@@ -18,9 +19,17 @@ public class UIManager : MonoBehaviour
     [SerializeField]
     float m_HeaderIndex = -1f;
 
+    [SerializeField]
+    float m_SubtitleIndex = -1f;
+
     public bool ShowInfoPanel = false;
+    public bool ShowSubtitlePanel = false;
 
     public DataManager DataMgr;
+
+    public int nbWordsToShow = 1;
+    public int prevIndex = 0;
+    public int curStartA = 0;
 
     UIDocument GetUIDocument() => GetComponent<UIDocument>();
     VisualElement GetRootVisualElement() => GetUIDocument().rootVisualElement;
@@ -77,8 +86,10 @@ public class UIManager : MonoBehaviour
         if (infoLabel != null)
             infoLabel.text = info;
 
-        var showScene2 = m_HeaderIndex > DataMgr.data.main.Length;
-        var showHeader = (m_HeaderIndex >= 1 && m_HeaderIndex <= DataMgr.data.main.Length);
+        int headerIndexInt = (int)m_HeaderIndex;
+
+        var showScene2 = headerIndexInt > DataMgr.data.main.Length;
+        var showHeader = (m_HeaderIndex >= 1 && headerIndexInt <= DataMgr.data.main.Length);
 
         var scene1 = root.Q<VisualElement>("Scene1");
         if (scene1 != null)
@@ -87,7 +98,7 @@ public class UIManager : MonoBehaviour
         if (scene2 != null)
             scene2.style.display = showScene2 ? DisplayStyle.Flex : DisplayStyle.None;
 
-        var headerStr = showHeader ? DataMgr.data.main[(int)m_HeaderIndex - 1].heading : "";
+        var headerStr = showHeader ? DataMgr.data.main[headerIndexInt - 1].heading : "";
         var header = root.Q<Label>("MainHeader");
         if (header != null)
         {
@@ -103,5 +114,74 @@ public class UIManager : MonoBehaviour
         if (conclusionTopic != null)
             conclusionTopic.text = topic;
 
+        var subtitleIndexInt = (int)m_SubtitleIndex;
+        var subtitle = "";
+        if (ShowSubtitlePanel)
+        {
+            var a = subtitleIndexInt % 2;
+            if (subtitleIndexInt >= 0)
+            {
+                if (headerIndexInt == 0)
+                {
+                    subtitle = GetSubTitle(DataMgr.data.intro.timepoints, subtitleIndexInt);
+                }
+                else if (headerIndexInt <= DataMgr.data.main.Length)
+                {
+                    subtitle = GetSubTitle(DataMgr.data.main[headerIndexInt - 1].detail.timepoints, subtitleIndexInt);
+                }
+                else if (subtitleIndexInt < DataMgr.data.conclusion.timepoints.Count)
+                {
+                    subtitle = GetSubTitle(DataMgr.data.conclusion.timepoints, subtitleIndexInt);
+                }
+            }
+
+            var subtitleLabel = root.Q<TextElement>("SubtitleLabel");
+            if (subtitleLabel != null)
+                subtitleLabel.text = subtitle;
+        }
+
+        var subtitlePanel = root.Q<VisualElement>("SubtitlePanel");
+        if (subtitlePanel != null)
+            subtitlePanel.style.display = !string.IsNullOrEmpty(subtitle) ? DisplayStyle.Flex : DisplayStyle.None;
+    }
+
+    string GetSubTitle(List<TimepointData> timepoints, int index)
+    {
+        if (index >= timepoints.Count)
+            return "";
+
+        // get two word from timepoints using index. If index % n == 0, get from index to index + n - 1 timepoints.word
+
+        if (prevIndex > index)
+            curStartA = 0;
+
+        var a = (index - curStartA) % nbWordsToShow;
+        if (a == 0 && prevIndex != index)
+        {
+            nbWordsToShow = UnityEngine.Random.Range(1, 3);
+            curStartA = index % nbWordsToShow;
+            a = (index - curStartA) % nbWordsToShow;
+        }
+        prevIndex = index;
+
+        var startIndex = index - a;
+        var endIndex = startIndex + nbWordsToShow - 1;
+
+        var subtitle = "";
+        for (int i = startIndex; i <= endIndex; i++)
+        {
+            if (i >= timepoints.Count)
+                break;
+
+            var timepoint = timepoints[i];
+            if (string.IsNullOrEmpty(timepoint.word))
+                continue;
+
+            subtitle += timepoint.word;
+            if (i < endIndex)
+                subtitle += " ";
+        }
+
+        return subtitle;
     }
 }

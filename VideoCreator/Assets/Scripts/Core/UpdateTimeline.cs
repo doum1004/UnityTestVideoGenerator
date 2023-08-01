@@ -13,6 +13,7 @@ using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
+using static TextToSpeech;
 
 public class UpdateTimeline : MonoBehaviour
 {
@@ -32,6 +33,9 @@ public class UpdateTimeline : MonoBehaviour
     public string clipsFolder => Path.Combine(DataMgr.DataContainer.GetDataStoreFolderPath(), "AnimationClip");
 
     bool isDirectorPlayed = false;
+    public float BeginPauseSec = 2f;
+    public float SoundTrackEndPauseSec = 1f;
+    public float EndPauseSec = 3f;
 
     void Update()
     {
@@ -188,14 +192,45 @@ public class UpdateTimeline : MonoBehaviour
         //animClip.SetCurve(string.Empty, typeof(UIManager), propertyName, AnimationCurve.Linear(start, value, end, value));
     }
 
+    public void AddAnimClipKey(AnimationCurve animCurve, float start, float end, int value)
+    {
+        AddKeyFrame(animCurve, start, value);
+        //AddKeyFrame(animCurve, start + elipse, value);
+        //AddKeyFrame(animCurve, end - elipse, value);
+        AddKeyFrame(animCurve, end, value);
+    }
+
+    void AddKeyFrame(AnimationCurve animCurve, float time, float value)
+    {
+        var keyFrame = new Keyframe(time, value);
+        animCurve.AddKey(keyFrame);
+        AnimationUtility.SetKeyLeftTangentMode(animCurve, animCurve.length - 1, AnimationUtility.TangentMode.Constant);
+        AnimationUtility.SetKeyRightTangentMode(animCurve, animCurve.length - 1, AnimationUtility.TangentMode.Constant);
+    }
+
+    public void AddAnimClipKey(AnimationCurve animCurve, float start, int value)
+    {
+        AddKeyFrame(animCurve, start, value);
+    }
+
+    public void AddTimepointsAnimClipKey(AnimationCurve animCurve, List<TimepointData> timepoints, float start)
+    {
+        AddAnimClipKey(animCurve, start, -1);
+
+        for (int i1 = 0; i1 < timepoints.Count; i1++)
+        {
+            var timepoint = timepoints[i1];
+            AddAnimClipKey(animCurve, start + timepoint.timeSeconds, i1);
+        }
+    }
+
     void AddSpeechAudioSource()
     {
         timeFrames.Clear();
         timeFrames.Add(0f);
 
         var start = timeFrames[timeFrames.Count - 1];
-        var beginPause = 2f;
-        var at1 = CreateAudioTrack(DataMgr.data.intro.audioClip, start + beginPause);
+        var at1 = CreateAudioTrack(DataMgr.data.intro.audioClip, start + BeginPauseSec);
         var end = (float)at1.start + (float)at1.duration;
         timeFrames.Add(end);
 
@@ -209,7 +244,7 @@ public class UpdateTimeline : MonoBehaviour
 
         start = timeFrames[timeFrames.Count - 1];
         at1 = CreateAudioTrack(DataMgr.data.conclusion.audioClip, start);
-        end = (float)at1.start + (float)at1.duration + 3;
+        end = (float)at1.start + (float)at1.duration + EndPauseSec;
         timeFrames.Add(end);
     }
 
@@ -254,21 +289,36 @@ public class UpdateTimeline : MonoBehaviour
 
     void CreateUICurveAnimations(AnimationTrack at)
     {
+        var headingAnimCurve = new AnimationCurve();
+        var subtitleAnimCurve = new AnimationCurve();
+
         int i = 0;
         var start = timeFrames[i++];
         var end = timeFrames[i++];
-        SetAnimClipCurve(at, "m_HeaderIndex", start, end, 0);
+        AddAnimClipKey(headingAnimCurve, start, 0);
+        AddTimepointsAnimClipKey(subtitleAnimCurve, DataMgr.data.intro.timepoints, start + 2);
 
-        for (int i1 = 1; i1 <= DataMgr.data.main.Length; i1++)
+        for (int i1 = 0; i1 < DataMgr.data.main.Length; i1++)
         {
             start = end;
             end = timeFrames[i++];
-            SetAnimClipCurve(at, "m_HeaderIndex", start, end, i1);
+            AddAnimClipKey(headingAnimCurve, start, i1 + 1);
+            AddTimepointsAnimClipKey(subtitleAnimCurve, DataMgr.data.main[i1].detail.timepoints, start);
         }
 
         start = end;
         end = timeFrames[i++];
-        SetAnimClipCurve(at, "m_HeaderIndex", start, end, DataMgr.data.main.Length + 1);
+        AddAnimClipKey(headingAnimCurve, start, DataMgr.data.main.Length + 1);
+        AddTimepointsAnimClipKey(subtitleAnimCurve, DataMgr.data.conclusion.timepoints, start);
+
+        var headingAnimClip = CraeteAnimationClip();
+        var timelineClip = at.CreateClip(headingAnimClip);
+        timelineClip.displayName = "Animation heading time clip";
+        timelineClip.start = 0;
+        timelineClip.duration = timeFrames.LastOrDefault();
+
+        headingAnimClip.SetCurve("", typeof(UIManager), "m_HeaderIndex", headingAnimCurve);
+        headingAnimClip.SetCurve("", typeof(UIManager), "m_SubtitleIndex", subtitleAnimCurve);
     }
 
     AudioTrack CreateAudioTrack(AudioClip audioClip, float startTime)
@@ -284,7 +334,7 @@ public class UpdateTimeline : MonoBehaviour
         // Add the AudioClip to the AudioTrack
         TimelineClip timelineClip = audioTrack.CreateClip(audioClip);
         timelineClip.start = startTime;
-        timelineClip.duration = duration + 1;
+        timelineClip.duration = duration + SoundTrackEndPauseSec;
 
         // Set the target GameObject as the track's binding
         playableDirector.SetGenericBinding(audioTrack, gameObject);

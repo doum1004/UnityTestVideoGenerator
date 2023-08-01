@@ -12,39 +12,47 @@ public class TextToSpeech : MonoBehaviour
     [System.Serializable]
     public class VoiceOption
     {
-        public string LangCode = "en-US";
-        public List<string> VoiceNames = new List<string> { "en-US-Studio-O" };
+        public string LangCode = "";
+        public List<string> VoiceNames = new List<string> { "" };
+        public string Gender = "";
         public int CurrentVoiceName = 0;
-        public VoiceOption(string langCode, List<string> voiceNames)
+        public VoiceOption(string langCode, List<string> voiceNames, string gender)
         {
             LangCode = langCode;
             VoiceNames = voiceNames;
+            Gender = gender;
         }
     }
 
     static string s_URL = "https://texttospeech.googleapis.com/v1/text:synthesize?key=";
+    static string s_URLBeta = "https://texttospeech.googleapis.com/v1beta1/text:synthesize?key=";
     Dictionary<string, int> langVoiceOptionIndexDict = new Dictionary<string, int> { { "en", 0 }, { "ko", 1 } };
-    public List<VoiceOption> VoiceOptions = new List<VoiceOption> {
-        new VoiceOption("en-US", new List<string> { "en-US-Studio-O" }),
-        new VoiceOption("ko-KR", new List<string> { "ko-KR-Neural2-B" })
+    public List<VoiceOption> VoiceOptions => new List<VoiceOption> {
+        new VoiceOption("en-US", new List<string> { "en-US-Neural2-F" }, "FEMALE"), //en-US-Studio-O
+        new VoiceOption("ko-KR", new List<string> { "ko-KR-Neural2-B" }, "FEMALE")
     };
 
     public string audioEncoding = "LINEAR16";
     public string pitch = "0";
     public float speakingRate = 1.1f;
 
+    public TTSResponseData ResponseData;
     public AudioClip OutputAudioClip;
+    public List<TimepointData> OutputTimePoints;
+    List<string> m_Words = new List<string>();
 
     public void TextToSpeechClip(string text, string lang, string folder, string clipName)
     {
-        StartCoroutine(TextToSpeechClipCoroutine(text, lang, folder, clipName));
+        //StartCoroutine(TextToSpeechClipCoroutine(text, lang, folder, clipName));
+        StartCoroutine(TextToSpeechClipCoroutineV1(text, lang, folder, clipName));
     }
 
-    public IEnumerator TextToSpeechClipCoroutine(string text, string lang, string folder, string clipName)
+    public IEnumerator TextToSpeechClipCoroutineV1(string text, string lang, string folder, string clipName)
     {
         var curVoiceOption = VoiceOptions[langVoiceOptionIndexDict[lang]];
         var langCode = curVoiceOption.LangCode;
         var voiceName = curVoiceOption.VoiceNames[curVoiceOption.CurrentVoiceName];
+        var gender = curVoiceOption.Gender;
         using (UnityWebRequest www = new UnityWebRequest(s_URL + VidiNomProjectSettings.GOOGLE_API_KEY, "POST"))
         {
             var requestBody = $"{{\"input\":{{\"text\":\"{text}\"}},\"voice\":{{\"languageCode\":\"{langCode}\",\"name\":\"{voiceName}\"}},\"audioConfig\":{{\"audioEncoding\":\"{audioEncoding}\",\"speakingRate\":{speakingRate},\"pitch\":{pitch}}}}}";
@@ -60,29 +68,102 @@ public class TextToSpeech : MonoBehaviour
                 yield break;
             }
 
-            byte[] audioData = www.downloadHandler.data;
-            HandleAudioData(audioData, GetFilePath(folder, clipName));
+            byte[] responseData = www.downloadHandler.data;
+            HandleResponseData(responseData, GetFilePath(folder, clipName));
         }
     }
-    
-    void HandleAudioData(byte[] audioData, string filePath)
+
+    public IEnumerator TextToSpeechClipCoroutine(string text, string lang, string folder, string clipName)
     {
-        var decodedAudioData = GetDecodedAudioData(audioData);
+        var curVoiceOption = VoiceOptions[langVoiceOptionIndexDict[lang]];
+        var langCode = curVoiceOption.LangCode;
+        var voiceName = curVoiceOption.VoiceNames[curVoiceOption.CurrentVoiceName];
+        var gender = curVoiceOption.Gender;
+        using (UnityWebRequest www = new UnityWebRequest(s_URLBeta + VidiNomProjectSettings.GOOGLE_API_KEY, "POST"))
+        {
+            m_Words.Clear();
+            var sentences = text.Split('.');
+            var i = 1;
+            var ssmlText = "<speak>";
+            foreach (var sentence in sentences)
+            {
+                ssmlText += "<p>";
+                var sentenceWords = sentence.Split(' ');
+                foreach (var word in sentenceWords)
+                {
+                    var trimedWord = word.Trim();
+                    if (string.IsNullOrEmpty(trimedWord))
+                        continue;
+
+                    var htmlCode = trimedWord.Replace("'", "&apos;").Replace("\"", "&quot;");
+                    ssmlText += $@"<mark name='{htmlCode}_{i++}' /> {trimedWord} ";
+
+                    m_Words.Add(trimedWord);
+                }
+                ssmlText += "</p>";
+            }
+            ssmlText += "</speak>";
+
+            var requestBody = $@"
+{{
+    ""input"": {{
+		""ssml"": ""{ssmlText}""
+
+    }},
+	""voice"": {{
+        ""languageCode"": ""{langCode}"",
+		""name"": ""{voiceName}"",
+		""ssmlGender"": ""{gender}""
+
+    }},
+	""enableTimePointing"": [""SSML_MARK""],
+	""audioConfig"": {{
+        ""audioEncoding"": ""{audioEncoding}"",
+		""speakingRate"": {speakingRate},
+        ""pitch"": {pitch}
+    }}
+}}";
+            Logger.Log(ssmlText);
+            var bodyRaw = System.Text.Encoding.UTF8.GetBytes(requestBody);
+            www.uploadHandler = new UploadHandlerRaw(bodyRaw);
+            www.downloadHandler = new DownloadHandlerBuffer();
+            www.SetRequestHeader("Content-Type", "application/json");
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.ConnectionError || www.result == UnityWebRequest.Result.ProtocolError)
+            {
+                Logger.LogError("Error: " + www.error);
+                yield break;
+            }
+
+            byte[] responseData = www.downloadHandler.data;
+            HandleResponseData(responseData, GetFilePath(folder, clipName));
+        }
+    }
+
+    void HandleResponseData(byte[] responseDataByte, string filePath)
+    {
+        ResponseData = GetResponseData(responseDataByte);
+
+        foreach (var a in ResponseData.timepoints)
+        {
+            Logger.Log(a.markName);
+        }
+
+        var decodedAudioData = System.Convert.FromBase64String(ResponseData.audioContent);
         OutputAudioClip = SaveAudioAsWav(decodedAudioData, filePath);
+        OutputTimePoints = ResponseData.timepoints;
+
+        for (int i = 0; i < OutputTimePoints.Count; i++)
+        {
+            OutputTimePoints[i].word = m_Words[i];
+        }
     }
 
-    [System.Serializable]
-    private class AudioResponse
+    TTSResponseData GetResponseData(byte[] responseDataByte)
     {
-        public string audioContent;
-    }
-
-    byte[] GetDecodedAudioData(byte[] audioData)
-    {
-        string audioContent = System.Text.Encoding.Default.GetString(audioData);
-        var responseJson = JsonUtility.FromJson<AudioResponse>(audioContent);
-        byte[] decodedAudioData = System.Convert.FromBase64String(responseJson.audioContent);
-        return decodedAudioData;
+        string responseDataStr = System.Text.Encoding.Default.GetString(responseDataByte);
+        return JsonUtility.FromJson<TTSResponseData>(responseDataStr);
     }
 
     string GetFilePath(string dir, string clipName)
@@ -151,4 +232,19 @@ public class TextToSpeech : MonoBehaviour
         return assetClip;
     }
 
+    [System.Serializable]
+    public class TTSResponseData
+    {
+        public string audioContent;
+        public List<TimepointData> timepoints;
+        public string audioConfig;
+    }
+
+    [System.Serializable]
+    public class TimepointData
+    {
+        public string markName;
+        public float timeSeconds;
+        public string word;
+    }
 }

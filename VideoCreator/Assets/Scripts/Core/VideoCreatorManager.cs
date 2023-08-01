@@ -17,6 +17,25 @@ public class VideoCreatorManager : MonoBehaviour
         StartCoroutine(WorkCoroutine());
     }
 
+    public IEnumerator WorkCoroutine()
+    {
+        yield return LoadCoroutine();
+        Produce();
+    }
+
+    [ContextMenu("Load")]
+    void Load()
+    {
+        StartCoroutine(LoadCoroutine());
+    }
+
+    public IEnumerator LoadCoroutine()
+    {
+        LoadData();
+        yield return TTSWorkCoroutine();
+        Timeline();
+    }
+
     [ContextMenu("LoadData")]
     void LoadData()
     {
@@ -30,14 +49,6 @@ public class VideoCreatorManager : MonoBehaviour
         StartCoroutine(TTSWorkCoroutine());
     }
 
-    public IEnumerator WorkCoroutine()
-    {
-        LoadData();
-        yield return TTSWorkCoroutine();
-        Second();
-        Produce();
-    }
-
     public IEnumerator TTSWorkCoroutine()
     {
         var folder = DataMgr.DataContainer.GetDataStoreFolderPath();
@@ -46,6 +57,7 @@ public class VideoCreatorManager : MonoBehaviour
         {
             yield return TTS.TextToSpeechClipCoroutine(DataMgr.data.intro.content, DataMgr.data.lang, folder, "intro");
             DataMgr.data.intro.audioClip = TTS.OutputAudioClip;
+            DataMgr.data.intro.timepoints = TTS.OutputTimePoints;
         }
 
         for (int i=0; i<DataMgr.data.main.Length; i++)
@@ -55,6 +67,7 @@ public class VideoCreatorManager : MonoBehaviour
             {
                 yield return TTS.TextToSpeechClipCoroutine(main.heading + ".\n\n" + main.detail.content, DataMgr.data.lang, folder, "main" + (i + 1));
                 main.detail.audioClip = TTS.OutputAudioClip;
+                main.detail.timepoints = TTS.OutputTimePoints;
             }
         }
 
@@ -62,13 +75,14 @@ public class VideoCreatorManager : MonoBehaviour
         {
             yield return TTS.TextToSpeechClipCoroutine(DataMgr.data.conclusion.content, DataMgr.data.lang, folder, "conclusion");
             DataMgr.data.conclusion.audioClip = TTS.OutputAudioClip;
+            DataMgr.data.conclusion.timepoints = TTS.OutputTimePoints;
         }
 
         DataMgr.SaveDataAsset();
     }
 
     [ContextMenu("Timeline")]
-    void Second()
+    void Timeline()
     {
         UI.DataMgr = DataMgr;
         TimelineManager.DataMgr = DataMgr;
@@ -86,6 +100,7 @@ public class VideoCreatorManager : MonoBehaviour
     public void SetupVideoRecordings()
     {
         VideoRecordings.RecordVideo = true;
+        VideoRecordings.ShortsVideo = true;
         VideoRecordings.CapsureImage = true;
         VideoRecordings.timeFrames = TimelineManager.timeFrames;
         VideoRecordings.playableDirector = TimelineManager.playableDirector;
@@ -97,7 +112,17 @@ public class VideoCreatorManager : MonoBehaviour
     void ProduceVideo()
     {
         SetupVideoRecordings();
+        VideoRecordings.ShortsVideo = false;
         VideoRecordings.CapsureImage = false;
+        EditorApplication.EnterPlaymode();
+    }
+
+    [ContextMenu("Produce - Video Shorts")]
+    void ProduceShorts()
+    {
+        SetupVideoRecordings();
+        VideoRecordings.CapsureImage = false;
+        VideoRecordings.RecordVideo = false;
         EditorApplication.EnterPlaymode();
     }
 
@@ -105,6 +130,7 @@ public class VideoCreatorManager : MonoBehaviour
     void ProduceImage()
     {
         SetupVideoRecordings();
+        VideoRecordings.ShortsVideo = false;
         VideoRecordings.RecordVideo = false;
         EditorApplication.EnterPlaymode();
     }

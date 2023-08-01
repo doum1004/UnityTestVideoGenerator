@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using static TextToSpeech;
 
 [System.Serializable]
 public class ArticleData
@@ -21,6 +22,7 @@ public class ArticleData
         public string[] images;
         public List<GameObject> imgObjs = new List<GameObject>();
         public AudioClip audioClip;
+        public List<TimepointData> timepoints;
     }
 
     [System.Serializable]

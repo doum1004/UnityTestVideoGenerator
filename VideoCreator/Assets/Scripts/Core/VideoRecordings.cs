@@ -34,13 +34,15 @@ public class VideoRecordings : MonoBehaviour
     public UIManager UI;
 
     public string renderFolder => DataMgr ? Path.Combine(DataMgr.DataContainer.GetDataStoreFolderPath(), "Render") : "";
-    public List<OutputResolution> VideoResolutions = new List<OutputResolution> { new OutputResolution() { OutputWidth = 1920, OutputHeight = 1080 } };
-    public List<OutputResolution> ImageResolutions = new List<OutputResolution> { new OutputResolution() { OutputWidth = 1280, OutputHeight = 720 }, new OutputResolution() { OutputWidth = 1200, OutputHeight = 1200 } };
+    public List<OutputResolution> VideoResolutions = new List<OutputResolution> { new OutputResolution() { OutputWidth = 1920, OutputHeight = 1080 }, new OutputResolution() { OutputWidth = 1080, OutputHeight = 1920 } };
+    public List<OutputResolution> ShortsResolutions = new List<OutputResolution> { new OutputResolution() { OutputWidth = 1080, OutputHeight = 1920 } };
+    public List<OutputResolution> ImageResolutions = new List<OutputResolution> { new OutputResolution() { OutputWidth = 1920, OutputHeight = 1080 }, new OutputResolution() { OutputWidth = 1200, OutputHeight = 1200 } };
 
     RecorderControllerSettings m_RecorderControllerSettings;
     RecorderController m_RecorderController;
 
     public bool RecordVideo = true;
+    public bool ShortsVideo = true;
     public bool CapsureImage = true;
 
     void OnEnable()
@@ -54,6 +56,8 @@ public class VideoRecordings : MonoBehaviour
             yield return StartImageCaptureCoroutine();
         if (RecordVideo)
             yield return StartVideoRecordCoroutine();
+        if (ShortsVideo)
+            yield return StartShortsRecordCoroutine();
         UnityEditor.EditorApplication.isPlaying = false;
     }
 
@@ -65,7 +69,7 @@ public class VideoRecordings : MonoBehaviour
             playableDirector.time = 0;
             yield return Wait();
 
-            StartRecordVideo(resolution);
+            StartRecordVideo(resolution, "video");
             // playableDirector move to begin and play
             playableDirector.Play();
 
@@ -78,13 +82,42 @@ public class VideoRecordings : MonoBehaviour
         yield break;
     }
 
+    IEnumerator StartShortsRecordCoroutine()
+    {
+        foreach (var resolution in ShortsResolutions)
+        {
+            playableDirector.Stop();
+            playableDirector.time = 0;
+            yield return Wait();
+
+            for (int i = 1; i < timeFrames.Count - 2; i++)
+            {
+                var begin = timeFrames[i];
+                var end = timeFrames[i + 1];
+
+                playableDirector.time = begin;
+                yield return Wait();
+
+                StartRecordVideo(resolution, $"short_{i}");
+                playableDirector.Play();
+
+                yield return Wait();
+                while (playableDirector.time <= end - 0.05f)
+                    yield return null;
+
+                m_RecorderController.StopRecording();
+            }
+        }
+        yield break;
+    }
+
     IEnumerator StartImageCaptureCoroutine()
     {
         foreach (var resolution in ImageResolutions)
         {
             playableDirector.Stop();
             playableDirector.time = 0;
-            yield return null;
+            yield return Wait();
 
             for (int i = 0; i < timeFrames.Count - 1; i++)
             {
@@ -105,6 +138,8 @@ public class VideoRecordings : MonoBehaviour
                 m_RecorderController.StopRecording();
             }
         }
+        UI.ShowInfoPanel = false;
+
         yield break;
     }
 
@@ -126,7 +161,7 @@ public class VideoRecordings : MonoBehaviour
         //return path;
     }
 
-    void StartRecordVideo(OutputResolution resolution)
+    void StartRecordVideo(OutputResolution resolution, string prefix)
     {
         m_RecorderControllerSettings = ScriptableObject.CreateInstance<RecorderControllerSettings>();
         m_RecorderController = new RecorderController(m_RecorderControllerSettings);
@@ -148,7 +183,7 @@ public class VideoRecordings : MonoBehaviour
             OutputHeight = resolution.OutputHeight
         };
 
-        string path = GetOutputPath("video", $"{resolution.OutputWidth}x{resolution.OutputHeight}");
+        string path = GetOutputPath(prefix, $"{resolution.OutputWidth}x{resolution.OutputHeight}");
         Logger.Log("RecordVideo at: " + path);
         videoRecorder.OutputFile = path;
 
