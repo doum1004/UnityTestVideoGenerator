@@ -30,6 +30,7 @@ public class UIManager : MonoBehaviour
     public int nbWordsToShow = 1;
     public int prevIndex = 0;
     public int curStartA = 0;
+    public int nbWordsToShowRange = 1;
 
     UIDocument GetUIDocument() => GetComponent<UIDocument>();
     VisualElement GetRootVisualElement() => GetUIDocument().rootVisualElement;
@@ -158,7 +159,7 @@ public class UIManager : MonoBehaviour
         var a = (index - curStartA) % nbWordsToShow;
         if (a == 0 && prevIndex != index)
         {
-            nbWordsToShow = UnityEngine.Random.Range(1, 3);
+            nbWordsToShow = UnityEngine.Random.Range(1, nbWordsToShowRange + 1);
             curStartA = index % nbWordsToShow;
             a = (index - curStartA) % nbWordsToShow;
         }

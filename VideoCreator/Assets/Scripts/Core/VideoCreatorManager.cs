@@ -1,15 +1,63 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
 public class VideoCreatorManager : MonoBehaviour
 {
+    public string DataFolder;
+    public List<string> DataJsonPaths = new List<string>();
     public string DataJsonPath;
     public DataManager DataMgr;
     public TextToSpeech TTS;
     public UIManager UI;
     public UpdateTimeline TimelineManager;
     public VideoRecordings VideoRecordings;
+
+    // Check exit play mode and do next work batch
+    void Update()
+    {
+        if (EditorApplication.isPlaying && !EditorApplication.isPlayingOrWillChangePlaymode)
+        {
+            if (VideoRecordings.Succeed)
+            {
+                DataJsonPaths.Remove(DataJsonPath);
+                StartCoroutine(WorkBatchNextCoroutine());
+            }
+        }
+    }
+
+    public IEnumerator WorkBatchNextCoroutine()
+    {
+        yield return new WaitForSeconds(10);
+        yield return WorkBatchCoroutine();
+    }
+
+    [ContextMenu("Work - Batch (Folder)")]
+    void WorkBatchFolder()
+    {
+        DataJsonPaths.Clear();
+        // c# traverse all subfolders of DataFolder to find all json files starts with 'article'
+        var jsonFiles = System.IO.Directory.GetFiles(DataFolder, "article*.json", System.IO.SearchOption.AllDirectories);
+        foreach (var jsonFile in jsonFiles)
+            DataJsonPaths.Add(jsonFile);
+        StartCoroutine(WorkBatchCoroutine());
+    }
+
+    [ContextMenu("Work - Batch (List)")]
+    void WorkBatchList()
+    {
+        StartCoroutine(WorkBatchCoroutine());
+    }
+
+    public IEnumerator WorkBatchCoroutine()
+    {
+        if (DataJsonPaths.Count == 0)
+            yield break;
+
+        DataJsonPath = DataJsonPaths[0];
+        yield return WorkCoroutine();
+    }
 
     [ContextMenu("Work")]
     void Work()

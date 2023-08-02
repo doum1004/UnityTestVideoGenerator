@@ -44,9 +44,11 @@ public class VideoRecordings : MonoBehaviour
     public bool RecordVideo = true;
     public bool ShortsVideo = true;
     public bool CapsureImage = true;
+    public bool Succeed = false;
 
     void OnEnable()
     {
+        Succeed = false;
         StartCoroutine(StartWorkCoroutine());
     }
 
@@ -54,15 +56,18 @@ public class VideoRecordings : MonoBehaviour
     {
         if (CapsureImage)
             yield return StartImageCaptureCoroutine();
-        if (RecordVideo)
-            yield return StartVideoRecordCoroutine();
         if (ShortsVideo)
             yield return StartShortsRecordCoroutine();
-        UnityEditor.EditorApplication.isPlaying = false;
+        if (RecordVideo)
+            yield return StartVideoRecordCoroutine();
+        yield return Wait();
+        EditorApplication.ExitPlaymode();
+        Succeed = true;
     }
 
     IEnumerator StartVideoRecordCoroutine()
     {
+        UI.ShowSubtitlePanel = true;
         foreach (var resolution in VideoResolutions)
         {
             playableDirector.Stop();
@@ -78,12 +83,14 @@ public class VideoRecordings : MonoBehaviour
                 yield return null;
 
             m_RecorderController.StopRecording();
+            yield return Wait();
         }
         yield break;
     }
 
     IEnumerator StartShortsRecordCoroutine()
     {
+        UI.ShowSubtitlePanel = true;
         foreach (var resolution in ShortsResolutions)
         {
             playableDirector.Stop();
@@ -106,6 +113,7 @@ public class VideoRecordings : MonoBehaviour
                     yield return null;
 
                 m_RecorderController.StopRecording();
+                yield return Wait();
             }
         }
         yield break;
@@ -113,6 +121,7 @@ public class VideoRecordings : MonoBehaviour
 
     IEnumerator StartImageCaptureCoroutine()
     {
+        UI.ShowSubtitlePanel = false;
         foreach (var resolution in ImageResolutions)
         {
             playableDirector.Stop();

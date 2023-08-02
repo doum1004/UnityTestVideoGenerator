@@ -1,10 +1,5 @@
 ﻿using System.Collections.Generic;
-using System.Reflection;
 using UnityEditor;
-using UnityEditor.UIElements;
-using UnityEditor.PackageManager;
-using UnityEditor.PackageManager.Requests;
-using UnityEngine;
 using UnityEngine.UIElements;
 
 class VidiNomProjectSettingsProvider : SettingsProvider

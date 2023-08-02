@@ -15,27 +15,31 @@ using UnityEngine.Playables;
 using UnityEngine.Timeline;
 using static TextToSpeech;
 
+[RequireComponent(typeof(PlayableDirector))]
 public class UpdateTimeline : MonoBehaviour
 {
-    public PlayableDirector playableDirector;
+    public PlayableDirector playableDirector => GetComponent<PlayableDirector>();
     TimelineAsset GetTimelineAsset() => playableDirector.playableAsset as TimelineAsset;
 
     public DataManager DataMgr;
 
-    public List<AnimationClip> clips;
+    public List<AnimationClip> clips = new List<AnimationClip>();
     public MovieRecorderSettings m_Settings = null;
     public UIManager UI;
 
     public List<float> timeFrames = new List<float>();
-    public AudioClip backgroundMusic;
+
+    public int BackgroundMusicIndex = -1;
+    public List<AudioClip> BackgroundMusics = new List<AudioClip>();
     public float backgroundMusicVolume = 0.12f;
+
     public string renderFolder => Path.Combine(DataMgr.DataContainer.GetDataStoreFolderPath(), "Render");
     public string clipsFolder => Path.Combine(DataMgr.DataContainer.GetDataStoreFolderPath(), "AnimationClip");
 
     bool isDirectorPlayed = false;
     public float BeginPauseSec = 2f;
     public float SoundTrackEndPauseSec = 1f;
-    public float EndPauseSec = 3f;
+    public float EndPauseSec = 5f;
 
     void Update()
     {
@@ -250,6 +254,15 @@ public class UpdateTimeline : MonoBehaviour
 
     void AddBackgroundAudioSource()
     {
+        var nbMusics = BackgroundMusics.Count;
+        if (nbMusics == 0)
+            return;
+
+        var musicIndex = BackgroundMusicIndex;
+        if (musicIndex == -1)
+            musicIndex = UnityEngine.Random.Range(0, nbMusics);
+        var backgroundMusic = BackgroundMusics[musicIndex];
+
         var duration = timeFrames.Count > 0 ? timeFrames[timeFrames.Count - 1] : 30;
         var timeline = GetTimelineAsset();
 
@@ -310,6 +323,7 @@ public class UpdateTimeline : MonoBehaviour
         end = timeFrames[i++];
         AddAnimClipKey(headingAnimCurve, start, DataMgr.data.main.Length + 1);
         AddTimepointsAnimClipKey(subtitleAnimCurve, DataMgr.data.conclusion.timepoints, start);
+        AddAnimClipKey(subtitleAnimCurve, end - EndPauseSec, -1);
 
         var headingAnimClip = CraeteAnimationClip();
         var timelineClip = at.CreateClip(headingAnimClip);
