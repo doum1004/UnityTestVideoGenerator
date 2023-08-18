@@ -34,7 +34,7 @@ public class VideoRecordings : MonoBehaviour
     public UIManager UI;
 
     public string renderFolder => DataMgr ? Path.Combine(DataMgr.DataContainer.GetDataStoreFolderPath(), "Render") : "";
-    public List<OutputResolution> VideoResolutions = new List<OutputResolution> { new OutputResolution() { OutputWidth = 1920, OutputHeight = 1080 }, new OutputResolution() { OutputWidth = 1080, OutputHeight = 1920 } };
+    public List<OutputResolution> VideoResolutions = new List<OutputResolution> { new OutputResolution() { OutputWidth = 1920, OutputHeight = 1080 } };
     public List<OutputResolution> ShortsResolutions = new List<OutputResolution> { new OutputResolution() { OutputWidth = 1080, OutputHeight = 1920 } };
     public List<OutputResolution> ImageResolutions = new List<OutputResolution> { new OutputResolution() { OutputWidth = 1920, OutputHeight = 1080 }, new OutputResolution() { OutputWidth = 1200, OutputHeight = 1200 } };
 
@@ -48,21 +48,23 @@ public class VideoRecordings : MonoBehaviour
 
     void OnEnable()
     {
-        Succeed = false;
         StartCoroutine(StartWorkCoroutine());
     }
 
     IEnumerator StartWorkCoroutine()
     {
+        JsonSettings.SucceedInRecord = false;
+        Logger.Log("Start StartWorkCoroutine");
         if (CapsureImage)
             yield return StartImageCaptureCoroutine();
         if (ShortsVideo)
             yield return StartShortsRecordCoroutine();
         if (RecordVideo)
             yield return StartVideoRecordCoroutine();
+        JsonSettings.SucceedInRecord = true;
         yield return Wait();
+        Logger.Log("End StartWorkCoroutine");
         EditorApplication.ExitPlaymode();
-        Succeed = true;
     }
 
     IEnumerator StartVideoRecordCoroutine()
@@ -99,13 +101,14 @@ public class VideoRecordings : MonoBehaviour
 
             for (int i = 1; i < timeFrames.Count - 2; i++)
             {
-                var begin = timeFrames[i];
+                var begin = timeFrames[i] - 0.1f;
                 var end = timeFrames[i + 1];
 
                 playableDirector.time = begin;
                 yield return Wait();
 
                 StartRecordVideo(resolution, $"short_{i}");
+                yield return Wait();
                 playableDirector.Play();
 
                 yield return Wait();
@@ -159,15 +162,8 @@ public class VideoRecordings : MonoBehaviour
 
     string GetOutputPath(string prefix, string suffix)
     {
-        var path = Path.Combine(renderFolder, $"{prefix}_{suffix}_{DataMgr.data.lang}") + "_v" + DefaultWildcard.Take;
+        var path = Path.Combine(renderFolder, $"{DataMgr.data.uuid}_{prefix}_{suffix}_{DataMgr.data.lang}");
         return path;
-        //var i = 0;
-        //string path;
-        //do
-        //{
-        //    path = Path.Combine(renderFolder, $"{prefix}_{suffix}_{DataMgr.data.lang}_{++i}_") + "_v" + DefaultWildcard.Take;
-        //} while (File.Exists(path));
-        //return path;
     }
 
     void StartRecordVideo(OutputResolution resolution, string prefix)

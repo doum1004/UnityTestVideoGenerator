@@ -15,7 +15,6 @@ public class TextToSpeech : MonoBehaviour
         public string LangCode = "";
         public List<string> VoiceNames = new List<string> { "" };
         public string Gender = "";
-        public int CurrentVoiceName = 0;
         public VoiceOption(string langCode, List<string> voiceNames, string gender)
         {
             LangCode = langCode;
@@ -28,9 +27,10 @@ public class TextToSpeech : MonoBehaviour
     static string s_URLBeta = "https://texttospeech.googleapis.com/v1beta1/text:synthesize?key=";
     Dictionary<string, int> langVoiceOptionIndexDict = new Dictionary<string, int> { { "en", 0 }, { "ko", 1 } };
     public List<VoiceOption> VoiceOptions => new List<VoiceOption> {
-        new VoiceOption("en-US", new List<string> { "en-US-Neural2-F" }, "FEMALE"), //en-US-Studio-O
-        new VoiceOption("ko-KR", new List<string> { "ko-KR-Neural2-B" }, "FEMALE")
+        new VoiceOption("en-US", new List<string> { "en-US-Neural2-F", "en-US-Neural2-C", "en-US-Standard-D" }, "FEMALE"), //en-US-Studio-O
+        new VoiceOption("ko-KR", new List<string> { "ko-KR-Neural2-B", "ko-KR-Neural2-A", "ko-KR-Standard-D" }, "FEMALE")
     };
+    Dictionary<int, int> currentVoiceIndex = new Dictionary<int, int>();
 
     public string audioEncoding = "LINEAR16";
     public string pitch = "0";
@@ -40,6 +40,16 @@ public class TextToSpeech : MonoBehaviour
     public AudioClip OutputAudioClip;
     public List<TimepointData> OutputTimePoints;
     List<string> m_Words = new List<string>();
+
+    public void SelectRandomCurrentVoiceNameIndex()
+    {
+        for (int i = 0; i < VoiceOptions.Count; i++)
+        {
+            var voiceIndex = UnityEngine.Random.Range(0, VoiceOptions[i].VoiceNames.Count);
+            currentVoiceIndex.Add(i, voiceIndex);
+            Logger.Log("SelectRandomCurrentVoiceNameIndex: " + VoiceOptions[i].VoiceNames[voiceIndex]);
+        }
+    }
 
     public void TextToSpeechClip(string text, string lang, string folder, string clipName)
     {
@@ -51,8 +61,8 @@ public class TextToSpeech : MonoBehaviour
     {
         var curVoiceOption = VoiceOptions[langVoiceOptionIndexDict[lang]];
         var langCode = curVoiceOption.LangCode;
-        var voiceName = curVoiceOption.VoiceNames[curVoiceOption.CurrentVoiceName];
-        var gender = curVoiceOption.Gender;
+        var voiceIndex = currentVoiceIndex[langVoiceOptionIndexDict[lang]];
+        var voiceName = curVoiceOption.VoiceNames[voiceIndex];
         using (UnityWebRequest www = new UnityWebRequest(s_URL + VidiNomProjectSettings.GOOGLE_API_KEY, "POST"))
         {
             var requestBody = $"{{\"input\":{{\"text\":\"{text}\"}},\"voice\":{{\"languageCode\":\"{langCode}\",\"name\":\"{voiceName}\"}},\"audioConfig\":{{\"audioEncoding\":\"{audioEncoding}\",\"speakingRate\":{speakingRate},\"pitch\":{pitch}}}}}";
@@ -73,18 +83,25 @@ public class TextToSpeech : MonoBehaviour
         }
     }
 
-    public IEnumerator TextToSpeechClipCoroutine(string text, string lang, string folder, string clipName)
+    public IEnumerator TextToSpeechClipCoroutine(string text, string lang, string folder, string clipName, string beforeSubtitle = "")
     {
         var curVoiceOption = VoiceOptions[langVoiceOptionIndexDict[lang]];
         var langCode = curVoiceOption.LangCode;
-        var voiceName = curVoiceOption.VoiceNames[curVoiceOption.CurrentVoiceName];
+        var voiceIndex = currentVoiceIndex[langVoiceOptionIndexDict[lang]];
+        var voiceName = curVoiceOption.VoiceNames[voiceIndex];
+        Logger.Log("voiceName: " + voiceName);
         var gender = curVoiceOption.Gender;
         using (UnityWebRequest www = new UnityWebRequest(s_URLBeta + VidiNomProjectSettings.GOOGLE_API_KEY, "POST"))
         {
             m_Words.Clear();
+
+            var ssmlText = "<speak>";
+            if (beforeSubtitle != "")
+                ssmlText += $"<p>{beforeSubtitle}</p>";
+            text = text.Remove(0, beforeSubtitle.Length);
+
             var sentences = text.Split('.');
             var i = 1;
-            var ssmlText = "<speak>";
             foreach (var sentence in sentences)
             {
                 ssmlText += "<p>";
@@ -112,9 +129,7 @@ public class TextToSpeech : MonoBehaviour
     }},
 	""voice"": {{
         ""languageCode"": ""{langCode}"",
-		""name"": ""{voiceName}"",
-		""ssmlGender"": ""{gender}""
-
+		""name"": ""{voiceName}""
     }},
 	""enableTimePointing"": [""SSML_MARK""],
 	""audioConfig"": {{

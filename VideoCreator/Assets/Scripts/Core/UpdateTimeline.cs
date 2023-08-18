@@ -36,28 +36,9 @@ public class UpdateTimeline : MonoBehaviour
     public string renderFolder => Path.Combine(DataMgr.DataContainer.GetDataStoreFolderPath(), "Render");
     public string clipsFolder => Path.Combine(DataMgr.DataContainer.GetDataStoreFolderPath(), "AnimationClip");
 
-    bool isDirectorPlayed = false;
     public float BeginPauseSec = 2f;
     public float SoundTrackEndPauseSec = 1f;
     public float EndPauseSec = 5f;
-
-    void Update()
-    {
-        ExitPlayingWhenPlayIsOver();
-    }
-
-    void ExitPlayingWhenPlayIsOver()
-    {
-        if (!playableDirector)
-            return;
-
-        if (Application.isPlaying)
-        {
-            isDirectorPlayed |= playableDirector.state == PlayState.Playing;
-            if (isDirectorPlayed && (playableDirector.time >= playableDirector.duration - 0.5f))
-                UnityEditor.EditorApplication.isPlaying = false;
-        }
-    }
 
     void RefreshTimeline()
     {

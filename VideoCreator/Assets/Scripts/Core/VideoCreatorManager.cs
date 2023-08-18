@@ -3,8 +3,13 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
+[ExecuteAlways]
 public class VideoCreatorManager : MonoBehaviour
 {
+    public bool SucceedInRecord;
+    public bool HasExecutedOnce = false;
+
+    public bool AutoWork = false;
     public string DataFolder;
     public List<string> DataJsonPaths = new List<string>();
     public string DataJsonPath;
@@ -14,33 +19,53 @@ public class VideoCreatorManager : MonoBehaviour
     public UpdateTimeline TimelineManager;
     public VideoRecordings VideoRecordings;
 
-    // Check exit play mode and do next work batch
     void Update()
     {
-        if (EditorApplication.isPlaying && !EditorApplication.isPlayingOrWillChangePlaymode)
+        SucceedInRecord = JsonSettings.SucceedInRecord;
+        DoNextJob();
+    }
+
+    // Check exit play mode and do next work batch
+    [ContextMenu("Work - Do next job")]
+    public void DoNextJob()
+    {
+        if (AutoWork && !HasExecutedOnce && !Application.isPlaying)
         {
-            if (VideoRecordings.Succeed)
-            {
-                DataJsonPaths.Remove(DataJsonPath);
-                StartCoroutine(WorkBatchNextCoroutine());
-            }
+            HasExecutedOnce = true;
+            StartCoroutine(WorkBatchNextCoroutine());
         }
     }
 
     public IEnumerator WorkBatchNextCoroutine()
     {
-        yield return new WaitForSeconds(10);
-        yield return WorkBatchCoroutine();
+        if (DataJsonPaths.Count == 0)
+            yield break;
+
+        // Check if we have exited Play mode and not yet executed the coroutine
+        if (JsonSettings.SucceedInRecord)
+        {
+            Debug.Log("WorkBatchNextCoroutine");
+            if (JsonSettings.SucceedInRecord)
+                DataJsonPaths.Remove(DataJsonPath);
+            yield return WorkBatchCoroutine();
+        }
+        HasExecutedOnce = false;
     }
 
-    [ContextMenu("Work - Batch (Folder)")]
-    void WorkBatchFolder()
+    [ContextMenu("Load Batch (Folder)")]
+    void LoadBatchFolder()
     {
         DataJsonPaths.Clear();
         // c# traverse all subfolders of DataFolder to find all json files starts with 'article'
         var jsonFiles = System.IO.Directory.GetFiles(DataFolder, "article*.json", System.IO.SearchOption.AllDirectories);
         foreach (var jsonFile in jsonFiles)
             DataJsonPaths.Add(jsonFile);
+    }
+
+    [ContextMenu("Work - Batch (Folder)")]
+    void WorkBatchFolder()
+    {
+        LoadBatchFolder();
         StartCoroutine(WorkBatchCoroutine());
     }
 
@@ -99,9 +124,10 @@ public class VideoCreatorManager : MonoBehaviour
 
     public IEnumerator TTSWorkCoroutine()
     {
+        TTS.SelectRandomCurrentVoiceNameIndex();
         var folder = DataMgr.DataContainer.GetDataStoreFolderPath();
 
-        if (DataMgr.data.intro.audioClip == null)
+        //if (DataMgr.data.intro.audioClip == null)
         {
             yield return TTS.TextToSpeechClipCoroutine(DataMgr.data.intro.content, DataMgr.data.lang, folder, "intro");
             DataMgr.data.intro.audioClip = TTS.OutputAudioClip;
@@ -111,15 +137,15 @@ public class VideoCreatorManager : MonoBehaviour
         for (int i=0; i<DataMgr.data.main.Length; i++)
         {
             var main = DataMgr.data.main[i];
-            if (main.detail.audioClip == null)
+            //if (main.detail.audioClip == null)
             {
-                yield return TTS.TextToSpeechClipCoroutine(main.heading + ".\n\n" + main.detail.content, DataMgr.data.lang, folder, "main" + (i + 1));
+                yield return TTS.TextToSpeechClipCoroutine(main.heading + ".\n\n" + main.detail.content, DataMgr.data.lang, folder, "main" + (i + 1), main.heading);
                 main.detail.audioClip = TTS.OutputAudioClip;
                 main.detail.timepoints = TTS.OutputTimePoints;
             }
         }
 
-        if (DataMgr.data.conclusion.audioClip == null)
+        //if (DataMgr.data.conclusion.audioClip == null)
         {
             yield return TTS.TextToSpeechClipCoroutine(DataMgr.data.conclusion.content, DataMgr.data.lang, folder, "conclusion");
             DataMgr.data.conclusion.audioClip = TTS.OutputAudioClip;
@@ -147,6 +173,8 @@ public class VideoCreatorManager : MonoBehaviour
 
     public void SetupVideoRecordings()
     {
+        JsonSettings.SucceedInRecord = false;
+
         VideoRecordings.RecordVideo = true;
         VideoRecordings.ShortsVideo = true;
         VideoRecordings.CapsureImage = true;

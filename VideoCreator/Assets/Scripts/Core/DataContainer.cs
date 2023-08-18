@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
@@ -86,7 +87,9 @@ public class DataContainer : MonoBehaviour
     GameObject AddChildImage(Texture2D texture, string name)
     {
         if (texture == null)
-            return null;
+        {
+            throw new Exception("Empty texture");
+        }
 
         var newObject = new GameObject(name);
         var spriteRenderer = newObject.AddComponent<SpriteRenderer>();

@@ -37,19 +37,8 @@ public class UIManager : MonoBehaviour
 
     void Update()
     {
-        StartCoroutine(UICouroutine());
-    } 
-
-    void OnValidate()
-    {
-        //StartCoroutine(UICouroutine());
-    }
-
-    IEnumerator UICouroutine()
-    {
         UpdateUI();
-        yield break;
-    }
+    } 
 
     public void UpdateUI()
     {
